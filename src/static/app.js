@@ -4,6 +4,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
+  // small HTML-escape helper to avoid XSS when injecting user-provided names
+  function escapeHtml(unsafe) {
+    return String(unsafe).replace(/[&<>"']/g, (s) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])
+    );
+  }
+
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
@@ -21,10 +28,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const spotsLeft = details.max_participants - details.participants.length;
 
         activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
+          <h4>${escapeHtml(name)}</h4>
+          <p>${escapeHtml(details.description)}</p>
+          <p><strong>Schedule:</strong> ${escapeHtml(details.schedule)}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+
+          <div class="participants">
+            <h5>Participants (${details.participants.length})</h5>
+            ${details.participants && details.participants.length
+              ? `<ul class="participants-list">${details.participants.map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul>`
+              : `<p class="no-participants">No participants yet.</p>`
+            }
+          </div>
         `;
 
         activitiesList.appendChild(activityCard);
